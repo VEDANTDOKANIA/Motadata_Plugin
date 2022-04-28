@@ -9,6 +9,7 @@ import (
 )
 
 func CpuData(credentials map[string]interface{}) {
+	const cmd = "mpstat -P ALL |awk  '{if ($4 != \"CPU\") print $4 \" \" $5 \" \" $7 \" \" $14}'"
 	sshHost := credentials["IP_Address"].(string)
 	sshPort := int(credentials["Port"].(float64))
 	sshUser := credentials["username"].(string)
@@ -40,7 +41,8 @@ func CpuData(credentials map[string]interface{}) {
 	} else {
 		result["Error"] = "no"
 	}
-	combo, er := session.CombinedOutput("mpstat -P ALL |awk  '{if ($4 != \"CPU\") print $4 \" \" $5 \" \" $7 \" \" $14}'")
+
+	combo, er := session.CombinedOutput(cmd)
 	output := string(combo)
 	res := strings.Split(output, "\n")
 	system := strings.Split(res[2], " ")
@@ -59,7 +61,8 @@ func CpuData(credentials map[string]interface{}) {
 		cores = append(cores, core)
 	}
 	result["Cores"] = cores
-
+	result["IP_Address"] = credentials["IP_Address"]
+	result["Metric_Group"] = credentials["Metric_Group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
 }

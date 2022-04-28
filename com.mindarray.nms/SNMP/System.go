@@ -70,6 +70,8 @@ func SystemData(credentials map[string]interface{}) {
 		}
 
 	}
+	result["IP_Address"] = credentials["IP_Address"]
+	result["Metric_Group"] = credentials["Metric_Group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
 

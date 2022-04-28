@@ -71,8 +71,10 @@ func DiskData(credentials map[string]interface{}) {
 	result["Disk.Total.Bytes"] = totalBytes
 	result["Disk.Used.Bytes"] = usedBytes
 	result["Disk.Available.Bytes"] = availableBytes
-	utilization = 100 - ((float64(totalBytes-availableBytes) / float64(totalBytes)) * 100)
+	utilization = ((float64(totalBytes-availableBytes) / float64(totalBytes)) * 100)
 	result["Disk.Utilization.Percent"] = utilization
+	result["IP_Address"] = credentials["IP_Address"]
+	result["Metric_Group"] = credentials["Metric_Group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
 }
