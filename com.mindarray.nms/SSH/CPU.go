@@ -54,10 +54,10 @@ func CpuData(credentials map[string]interface{}) {
 		//cpu := make(map[string]interface{})
 		core := make(map[string]interface{})
 		value := strings.Split(res[i], " ")
-		core["Cpu.Name"] = value[0]
-		core["Cpu.User.Percent"] = value[1]
-		core["Cpu.System.Percent"] = value[2]
-		core["Cpu.Idle.Percent"] = value[3]
+		core["Core.Name"] = value[0]
+		core["Core.User.Percent"] = value[1]
+		core["Core.System.Percent"] = value[2]
+		core["Core.Idle.Percent"] = value[3]
 		cores = append(cores, core)
 	}
 	result["Cores"] = cores

@@ -66,6 +66,8 @@ func main() {
 			case "Process":
 				Winrm.ProcessData(credentials)
 				break
+			case "CPU":
+				Winrm.CpuData(credentials)
 			default:
 				result["Error"] = "yes"
 				result["Cause"] = "Wrong metric group selected for metric type Windows"
