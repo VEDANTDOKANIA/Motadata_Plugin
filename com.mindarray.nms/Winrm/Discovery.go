@@ -1,25 +1,35 @@
 package Winrm
 
 import (
+	exception "MotadataPlugin/com.mindarray.nms/ExceptionHandler"
 	"encoding/json"
 	"fmt"
 	"github.com/masterzen/winrm"
 )
 
 func Discovery(credentials map[string]interface{}) {
-	host := (credentials["IP_Address"]).(string)
-	port := int(credentials["Port"].(float64))
+	defer exception.ErrorHandle(credentials)
+	var errorOccurred []string
+	defer exception.ErrorHandle(credentials)
+	result := make(map[string]interface{})
+	host := (credentials["ip.address"]).(string)
+	port := int(credentials["port"].(float64))
 	username := credentials["username"].(string)
 	password := credentials["password"].(string)
-
 	endpoint := winrm.NewEndpoint(host, port, false, false, nil, nil, nil, 0)
-	_, err := winrm.NewClient(endpoint, username, password)
-	result := make(map[string]interface{})
+	client, err := winrm.NewClient(endpoint, username, password)
 	if err != nil {
-		result["Error"] = "yes"
-		result["Cause"] = err
+		errorOccurred = append(errorOccurred, err.Error())
+	}
+	_, err2 := client.CreateShell()
+	if err2 != nil {
+		errorOccurred = append(errorOccurred, err2.Error())
+	}
+	if len(errorOccurred) == 0 {
+		result["status"] = "successful"
 	} else {
-		result["Error"] = "no"
+		result["status"] = "Unsuccessful"
+		result["error"] = errorOccurred
 	}
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

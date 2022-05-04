@@ -1,5 +1,7 @@
 package Winrm
 
-func SystemData(credentials map[string]interface{}) {
+import exception "MotadataPlugin/com.mindarray.nms/ExceptionHandler"
 
+func SystemData(credentials map[string]interface{}) {
+	defer exception.ErrorHandle(credentials)
 }

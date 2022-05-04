@@ -1,6 +1,7 @@
 package Winrm
 
 import (
+	exception "MotadataPlugin/com.mindarray.nms/ExceptionHandler"
 	"encoding/json"
 	"fmt"
 	"github.com/masterzen/winrm"
@@ -10,8 +11,9 @@ import (
 )
 
 func DiskData(credentials map[string]interface{}) {
-	host := (credentials["IP_Address"]).(string)
-	port := int(credentials["Port"].(float64))
+	defer exception.ErrorHandle(credentials)
+	host := (credentials["ip.address"]).(string)
+	port := int(credentials["port"].(float64))
 	username := credentials["username"].(string)
 	password := credentials["password"].(string)
 
@@ -19,10 +21,10 @@ func DiskData(credentials map[string]interface{}) {
 	client, err := winrm.NewClient(endpoint, username, password)
 	result := make(map[string]interface{})
 	if err != nil {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = err
 	} else {
-		result["Error"] = "no"
+		result["error"] = "no"
 	}
 	a := "aa"
 	output := ""
@@ -64,8 +66,8 @@ func DiskData(credentials map[string]interface{}) {
 	result["Disk.Used.Percent"] = ((float64(totalBytes) - float64(usedBytes)) / float64(totalBytes)) * 100
 	result["Disk.Available.Percent"] = 100.00 - (result["Disk.Used.Percent"]).(float64)
 	result["Disk"] = disks
-	result["IP_Address"] = credentials["IP_Address"]
-	result["Metric_Group"] = credentials["Metric_Group"]
+	result["ip.address"] = credentials["ip.address"]
+	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
 }

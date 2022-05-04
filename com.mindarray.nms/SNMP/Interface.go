@@ -1,6 +1,7 @@
 package SNMP
 
 import (
+	exception "MotadataPlugin/com.mindarray.nms/ExceptionHandler"
 	"encoding/json"
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
@@ -8,6 +9,7 @@ import (
 )
 
 func InterfaceData(credentials map[string]interface{}) {
+	defer exception.ErrorHandle(credentials)
 	result := make(map[string]interface{})
 	var version = g.Version1
 	switch credentials["version"] {
@@ -23,21 +25,21 @@ func InterfaceData(credentials map[string]interface{}) {
 	}
 
 	params := &g.GoSNMP{
-		Target:    credentials["IP_Address"].(string),
-		Port:      uint16(int(credentials["Port"].(float64))),
+		Target:    credentials["ip.address"].(string),
+		Port:      uint16(int(credentials["port"].(float64))),
 		Community: credentials["community"].(string),
 		Version:   version,
 		Timeout:   time.Duration(1) * time.Second,
 	}
 	err := params.Connect()
 	if err != nil {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = err
 		data, _ := json.Marshal(result)
 		fmt.Print(string(data))
 		//return
 	} else {
-		result["Error"] = "no"
+		result["error"] = "no"
 	}
 	walkOid := "1.3.6.1.2.1.2.2.1.1"
 	index := "1.3.6.1.2.1.2.2.1.1."
@@ -79,7 +81,7 @@ func InterfaceData(credentials map[string]interface{}) {
 	},
 	)
 	if walk != nil {
-		result["Error"] = walk
+		result["error"] = walk
 	}
 
 	var oids []string
@@ -108,7 +110,7 @@ func InterfaceData(credentials map[string]interface{}) {
 		}
 		output, error := params.Get(oids[startIndex:endIndex])
 		if error != nil {
-			result["Error"] = error
+			result["error"] = error
 			return
 		}
 		for _, variable := range output.Variables {
@@ -153,8 +155,8 @@ func InterfaceData(credentials map[string]interface{}) {
 		interfaces = append(interfaces, interfaceValue)
 	}
 	result["Interface"] = interfaces
-	result["IP_Address"] = credentials["IP_Address"]
-	result["Metric_Group"] = credentials["Metric_Group"]
+	result["ip.address"] = credentials["ip.address"]
+	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
 }

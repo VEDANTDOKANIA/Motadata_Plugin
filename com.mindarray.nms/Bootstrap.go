@@ -10,29 +10,31 @@ import (
 	"os"
 )
 
+//TODO CHange error msg in all metric group with status
+
 func main() {
 	argument, _ := base64.StdEncoding.DecodeString(os.Args[1])
 	credentials := make(map[string]interface{})
 	var error = json.Unmarshal([]byte(string(argument)), &credentials)
 	result := make(map[string]interface{})
 	if error != nil {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = error
 
 	}
-	fmt.Println(credentials)
-	if credentials["category"] == "Discovery" {
-		if credentials["Metric_Type"] == "linux" {
+
+	if credentials["category"] == "discovery" {
+		if credentials["metric.type"] == "linux" {
 			SSH.Discovery(credentials)
-		} else if credentials["Metric_Type"] == "windows" {
+		} else if credentials["metric.type"] == "windows" {
 			Winrm.Discovery(credentials)
-		} else if credentials["Metric_Type"] == "network" {
+		} else if credentials["metric.type"] == "network" {
 			SNMP.Discovery(credentials)
 		}
 
-	} else if credentials["category"] == "Polling" {
-		if credentials["Metric_Type"] == "linux" {
-			switch credentials["Metric_Group"] {
+	} else if credentials["category"] == "polling" {
+		if credentials["metric.type"] == "linux" {
+			switch credentials["metric.group"] {
 			case "System":
 				SSH.SystemData(credentials)
 				break
@@ -48,12 +50,12 @@ func main() {
 			case "CPU":
 				SSH.CpuData(credentials)
 			default:
-				result["Error"] = "yes"
+				result["error"] = "yes"
 				result["Cause"] = "Wrong metric group selected for metric type linux"
 
 			}
-		} else if credentials["Metric_Type"] == "windows" {
-			switch credentials["Metric_Group"] {
+		} else if credentials["metric.type"] == "windows" {
+			switch credentials["metric.group"] {
 			case "System":
 				Winrm.SystemData(credentials)
 				break
@@ -69,12 +71,12 @@ func main() {
 			case "CPU":
 				Winrm.CpuData(credentials)
 			default:
-				result["Error"] = "yes"
+				result["error"] = "yes"
 				result["Cause"] = "Wrong metric group selected for metric type Windows"
 
 			}
-		} else if credentials["Metric_Type"] == "network" {
-			switch credentials["Metric_Group"] {
+		} else if credentials["metric.type"] == "network" {
+			switch credentials["metric.group"] {
 			case "System":
 				SNMP.SystemData(credentials)
 				break
@@ -82,12 +84,12 @@ func main() {
 				SNMP.InterfaceData(credentials)
 				break
 			default:
-				result["Error"] = "yes"
+				result["error"] = "yes"
 				result["Cause"] = "Wrong metric group selected for metric type Network Devices"
 			}
 		}
 	} else {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = "Wrong Category Given"
 
 	}

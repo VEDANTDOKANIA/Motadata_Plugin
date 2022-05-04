@@ -1,6 +1,7 @@
 package SNMP
 
 import (
+	exception "MotadataPlugin/com.mindarray.nms/ExceptionHandler"
 	"encoding/json"
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
@@ -8,6 +9,7 @@ import (
 )
 
 func SystemData(credentials map[string]interface{}) {
+	defer exception.ErrorHandle(credentials)
 	result := make(map[string]interface{})
 	var version = g.Version1
 	switch credentials["version"] {
@@ -23,21 +25,21 @@ func SystemData(credentials map[string]interface{}) {
 	}
 
 	params := &g.GoSNMP{
-		Target:    credentials["IP_Address"].(string),
-		Port:      uint16(int(credentials["Port"].(float64))),
+		Target:    credentials["ip.address"].(string),
+		Port:      uint16(int(credentials["port"].(float64))),
 		Community: credentials["community"].(string),
 		Version:   version,
 		Timeout:   time.Duration(1) * time.Second,
 	}
 	err := params.Connect()
 	if err != nil {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = err
 		data, _ := json.Marshal(result)
 		fmt.Print(string(data))
 		//return
 	} else {
-		result["Error"] = "no"
+		result["error"] = "no"
 	}
 
 	oid := []string{"1.3.6.1.2.1.1.5.0", "1.3.6.1.2.1.1.1.0", "1.3.6.1.2.1.1.6.0", "1.3.6.1.2.1.1.2.0", "1.3.6.1.2.1.1.3.0"}
@@ -66,12 +68,12 @@ func SystemData(credentials map[string]interface{}) {
 			result["System_Uptime"] = variable.Value
 			break
 		default:
-			result["Error"] = "Unknown Interface"
+			result["error"] = "Unknown Interface"
 		}
 
 	}
-	result["IP_Address"] = credentials["IP_Address"]
-	result["Metric_Group"] = credentials["Metric_Group"]
+	result["ip.address"] = credentials["ip.address"]
+	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
 

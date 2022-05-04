@@ -1,6 +1,7 @@
 package SSH
 
 import (
+	exception "MotadataPlugin/com.mindarray.nms/ExceptionHandler"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/ssh"
@@ -8,13 +9,14 @@ import (
 )
 
 func Discovery(credentials map[string]interface{}) {
-	sshHost := credentials["IP_Address"].(string)
-	sshPort := int(credentials["Port"].(float64))
+	defer exception.ErrorHandle(credentials)
+	sshHost := credentials["ip.address"].(string)
+	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
 
 	config := &ssh.ClientConfig{
-		Timeout:         10 * time.Second,
+		Timeout:         6 * time.Second,
 		User:            sshUser,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Config: ssh.Config{Ciphers: []string{
@@ -27,10 +29,10 @@ func Discovery(credentials map[string]interface{}) {
 
 	result := make(map[string]interface{})
 	if er != nil {
-		result["Error"] = "yes"
-		result["Cause"] = er
+		result["status"] = "Unsuccessful"
+		result["error"] = er.Error()
 	} else {
-		result["Error"] = "no"
+		result["status"] = "successful"
 	}
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

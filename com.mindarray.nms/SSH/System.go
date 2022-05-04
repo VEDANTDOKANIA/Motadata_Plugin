@@ -1,6 +1,7 @@
 package SSH
 
 import (
+	exception "MotadataPlugin/com.mindarray.nms/ExceptionHandler"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/ssh"
@@ -9,9 +10,10 @@ import (
 )
 
 func SystemData(credentials map[string]interface{}) {
+	defer exception.ErrorHandle(credentials)
 	const cmd = "uname -a | awk  '{ print $1 \" \" $2  \" \" $4 \" \"$6 \" \" $7 \" \" $8 \" \"$9 }' && vmstat | awk  '{if ($1 != \"procs\" && $1 !=\"r\") print $1 \" \" $2 \" \"  $12}'"
-	sshHost := credentials["IP_Address"].(string)
-	sshPort := int(credentials["Port"].(float64))
+	sshHost := credentials["ip.address"].(string)
+	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
 
@@ -29,18 +31,18 @@ func SystemData(credentials map[string]interface{}) {
 
 	result := make(map[string]interface{})
 	if er != nil {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = er
 	} else {
-		result["Error"] = "no"
+		result["error"] = "no"
 	}
 	session, err := sshClient.NewSession()
 
 	if err != nil {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = er
 	} else {
-		result["Error"] = "no"
+		result["error"] = "no"
 	}
 
 	combo, er := session.CombinedOutput(cmd)
@@ -56,8 +58,8 @@ func SystemData(credentials map[string]interface{}) {
 	result["System.Running.Process"] = processValue[0]
 	result["System.Blocking.Process"] = processValue[1]
 	result["System.Context.Switching"] = processValue[2]
-	result["IP_Address"] = credentials["IP_Address"]
-	result["Metric_Group"] = credentials["Metric_Group"]
+	result["ip.address"] = credentials["ip.address"]
+	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
 }

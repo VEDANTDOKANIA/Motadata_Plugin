@@ -1,6 +1,7 @@
 package SSH
 
 import (
+	exception "MotadataPlugin/com.mindarray.nms/ExceptionHandler"
 	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/ssh"
@@ -10,8 +11,9 @@ import (
 )
 
 func DiskData(credentials map[string]interface{}) {
-	sshHost := credentials["IP_Address"].(string)
-	sshPort := int(credentials["Port"].(float64))
+	defer exception.ErrorHandle(credentials)
+	sshHost := credentials["ip.address"].(string)
+	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
 
@@ -29,17 +31,17 @@ func DiskData(credentials map[string]interface{}) {
 
 	result := make(map[string]interface{})
 	if er != nil {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = er
 	} else {
-		result["Error"] = "no"
+		result["error"] = "no"
 	}
 	session, err := sshClient.NewSession()
 	if err != nil {
-		result["Error"] = "yes"
+		result["error"] = "yes"
 		result["Cause"] = er
 	} else {
-		result["Error"] = "no"
+		result["error"] = "no"
 	}
 	combo, er := session.CombinedOutput("df | awk  '{if ($1 != \"Filesystem\") print $1 \" \" $2 \" \" $3 \" \" $4 \" \"$5}'")
 	output := string(combo)
@@ -73,8 +75,8 @@ func DiskData(credentials map[string]interface{}) {
 	result["Disk.Available.Bytes"] = availableBytes
 	utilization = ((float64(totalBytes-availableBytes) / float64(totalBytes)) * 100)
 	result["Disk.Utilization.Percent"] = utilization
-	result["IP_Address"] = credentials["IP_Address"]
-	result["Metric_Group"] = credentials["Metric_Group"]
+	result["ip.address"] = credentials["ip.address"]
+	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
 }
