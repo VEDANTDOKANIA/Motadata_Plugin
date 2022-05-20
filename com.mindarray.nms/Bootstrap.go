@@ -24,63 +24,63 @@ func main() {
 	}
 
 	if credentials["category"] == "discovery" {
-		if credentials["metric.type"] == "linux" {
+		if credentials["type"] == "linux" {
 			SSH.Discovery(credentials)
-		} else if credentials["metric.type"] == "windows" {
+		} else if credentials["type"] == "windows" {
 			Winrm.Discovery(credentials)
-		} else if credentials["metric.type"] == "network" {
+		} else if credentials["type"] == "snmp" {
 			SNMP.Discovery(credentials)
 		}
 
 	} else if credentials["category"] == "polling" {
-		if credentials["metric.type"] == "linux" {
+		if credentials["type"] == "linux" {
 			switch credentials["metric.group"] {
-			case "System":
+			case "system":
 				SSH.SystemData(credentials)
 				break
-			case "Disk":
+			case "disk":
 				SSH.DiskData(credentials)
 				break
-			case "Memory":
+			case "memory":
 				SSH.MemoryData(credentials)
 				break
-			case "Process":
+			case "process":
 				SSH.ProcessData(credentials)
 				break
-			case "CPU":
+			case "cpu":
 				SSH.CpuData(credentials)
 			default:
 				result["error"] = "yes"
 				result["Cause"] = "Wrong metric group selected for metric type linux"
 
 			}
-		} else if credentials["metric.type"] == "windows" {
+		} else if credentials["type"] == "windows" {
 			switch credentials["metric.group"] {
-			case "System":
+			case "system":
 				Winrm.SystemData(credentials)
 				break
-			case "Disk":
+			case "disk":
 				Winrm.DiskData(credentials)
 				break
-			case "Memory":
+			case "memory":
 				Winrm.MemoryData(credentials)
 				break
-			case "Process":
+			case "process":
 				Winrm.ProcessData(credentials)
 				break
-			case "CPU":
+			case "cpu":
 				Winrm.CpuData(credentials)
 			default:
 				result["error"] = "yes"
 				result["Cause"] = "Wrong metric group selected for metric type Windows"
 
 			}
-		} else if credentials["metric.type"] == "network" {
+		} else if credentials["type"] == "snmp" {
 			switch credentials["metric.group"] {
-			case "System":
+			case "system":
 				SNMP.SystemData(credentials)
 				break
-			case "Interface":
+			case "interface":
 				SNMP.InterfaceData(credentials)
 				break
 			default:

@@ -10,7 +10,7 @@ import (
 
 func CpuData(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
-	host := (credentials["ip.address"]).(string)
+	host := (credentials["ip"]).(string)
 	port := int(credentials["port"].(float64))
 	username := credentials["username"].(string)
 	password := credentials["password"].(string)
@@ -37,19 +37,19 @@ func CpuData(credentials map[string]interface{}) {
 		count := 0
 		core := make(map[string]interface{})
 		if value[i][1] == "_total" {
-			result["System.Cpu.Idle.Percent"] = value[i][3]
-			result["System.Cpu.Process.Percent"] = value[count+size][3]
-			result["System.Cpu.User.Percent"] = strings.Split(value[count+size+size][3], "\r")[0]
+			result["system.cpu.idle.percent"] = value[i][3]
+			result["system.cpu.process.percent"] = value[count+size][3]
+			result["system.cpu.user.percent"] = strings.Split(value[count+size+size][3], "\r")[0]
 		} else {
-			core["Core.Name"] = value[i][1]
-			core["Core.Idle.Percent"] = value[i][3]
-			core["Core.Process.Percent"] = value[count+size][3]
-			core["Core.User.Percent"] = strings.Split(value[count+size+size][3], "\r")[0]
+			core["core.name"] = value[i][1]
+			core["core.idle.percent"] = value[i][3]
+			core["core.process.percent"] = value[count+size][3]
+			core["core.user.percent"] = strings.Split(value[count+size+size][3], "\r")[0]
 			cores = append(cores, core)
 		}
 	}
-	result["Cores"] = cores
-	result["ip.address"] = credentials["ip.address"]
+	result["cores"] = cores
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	fmt.Println(value)
 }

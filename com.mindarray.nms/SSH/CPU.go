@@ -12,7 +12,7 @@ import (
 func CpuData(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
 	const cmd = "mpstat -P ALL |awk  '{if ($4 != \"CPU\") print $4 \" \" $5 \" \" $7 \" \" $14}'"
-	sshHost := credentials["ip.address"].(string)
+	sshHost := credentials["ip"].(string)
 	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
@@ -48,22 +48,22 @@ func CpuData(credentials map[string]interface{}) {
 	output := string(combo)
 	res := strings.Split(output, "\n")
 	system := strings.Split(res[2], " ")
-	result["System.Cpu.User.Percent"] = system[1]
-	result["System.Cpu.System.Percent"] = system[2]
-	result["System.Cpu.Idle.Percent"] = system[3]
+	result["system.cpu.user.percent"] = system[1]
+	result["system.cpu.system.percent"] = system[2]
+	result["system.cpu.idle.percent"] = system[3]
 	var cores []map[string]interface{}
 	for i := 3; i < len(res)-1; i++ {
 		//cpu := make(map[string]interface{})
 		core := make(map[string]interface{})
 		value := strings.Split(res[i], " ")
-		core["Core.Name"] = value[0]
-		core["Core.User.Percent"] = value[1]
-		core["Core.System.Percent"] = value[2]
-		core["Core.Idle.Percent"] = value[3]
+		core["core.name"] = value[0]
+		core["core.user.percent"] = value[1]
+		core["core.system.percent"] = value[2]
+		core["core.idle.percent"] = value[3]
 		cores = append(cores, core)
 	}
-	result["Cores"] = cores
-	result["ip.address"] = credentials["ip.address"]
+	result["cores"] = cores
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

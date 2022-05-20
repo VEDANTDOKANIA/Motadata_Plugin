@@ -11,7 +11,7 @@ import (
 
 func ProcessData(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
-	sshHost := credentials["ip.address"].(string)
+	sshHost := credentials["ip"].(string)
 	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
@@ -50,15 +50,15 @@ func ProcessData(credentials map[string]interface{}) {
 		//cpu := make(map[string]interface{})
 		processValue := make(map[string]interface{})
 		value := strings.Split(res[i], " ")
-		processValue["Process.User"] = value[0]
-		processValue["Process.ID"] = value[1]
-		processValue["Process.CPU.Percent"] = value[2]
-		processValue["Process.Memory.Percent"] = value[3]
-		processValue["Process.Command"] = value[4]
+		processValue["process.user"] = value[0]
+		processValue["process.id"] = value[1]
+		processValue["process.cpu.percent"] = value[2]
+		processValue["process.memory.percent"] = value[3]
+		processValue["process.command"] = value[4]
 		processes = append(processes, processValue)
 	}
-	result["Process"] = processes
-	result["ip.address"] = credentials["ip.address"]
+	result["processes"] = processes
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

@@ -10,7 +10,7 @@ import (
 
 func ProcessData(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
-	host := (credentials["ip.address"]).(string)
+	host := (credentials["ip"]).(string)
 	port := int(credentials["port"].(float64))
 	username := credentials["username"].(string)
 	password := credentials["password"].(string)
@@ -48,23 +48,23 @@ func ProcessData(credentials map[string]interface{}) {
 			}
 		}
 		if count == 0 {
-			temp1["Process.Name"] = processName
+			temp1["process.name"] = processName
 			if (value[i][3]) == "id process\r" {
-				temp1["Process.ID"] = value[i][4]
+				temp1["process.id"] = value[i][4]
 			} else if value[i][3] == "% processor time\r" {
-				temp1["Process.Processor.Time.Percent"] = value[i][4]
+				temp1["process.processor.time.percent"] = value[i][4]
 			} else if value[i][3] == "thread count\r" {
-				temp1["Process.thread.Count"] = value[i][4]
+				temp1["process.thread.count"] = value[i][4]
 			}
 			processes = append(processes, temp1)
 
 		} else {
 			if (value[i][3]) == "id process\r" {
-				temp["Process.ID"] = value[i][4]
+				temp["process.id"] = value[i][4]
 			} else if value[i][3] == "% processor time\r" {
-				temp["Process.Processor.Time.Percent"] = value[i][4]
+				temp["process.processor.time.percent"] = value[i][4]
 			} else if value[i][3] == "thread count\r" {
-				temp["Process.thread.Count"] = value[i][4]
+				temp["process.thread.count"] = value[i][4]
 			}
 			count = 1
 			processes = append(processes, temp)
@@ -78,12 +78,12 @@ func ProcessData(credentials map[string]interface{}) {
 		count := k
 		temp2 := make(map[string]interface{})
 		temp2 = processes[k]
-		temp2["Process.Processor.Time.Percent"] = processes[count+size]["Process.Processor.Time.Percent"]
-		temp2["Process.Thread.Count"] = processes[count+size+size]["Process.thread.Count"]
+		temp2["process.processor.time.percent"] = processes[count+size]["process.processor.time.percent"]
+		temp2["process.thread.count"] = processes[count+size+size]["process.thread.count"]
 		Values = append(Values, temp2)
 	}
-	result["Process"] = Values
-	result["ip.address"] = credentials["ip.address"]
+	result["process"] = Values
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

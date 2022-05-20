@@ -25,7 +25,7 @@ func InterfaceData(credentials map[string]interface{}) {
 	}
 
 	params := &g.GoSNMP{
-		Target:    credentials["ip.address"].(string),
+		Target:    credentials["ip"].(string),
 		Port:      uint16(int(credentials["port"].(float64))),
 		Community: credentials["community"].(string),
 		Version:   version,
@@ -127,35 +127,35 @@ func InterfaceData(credentials map[string]interface{}) {
 	var interfaces []map[string]interface{}
 	for i := 0; i < len(resultArray); i = i + 11 {
 		interfaceValue := make(map[string]interface{})
-		interfaceValue["Interface.Index"] = resultArray[i].(int)
-		interfaceValue["Interface.Description"] = resultArray[i+1]
-		interfaceValue["Interface.Name"] = resultArray[i+2]
+		interfaceValue["interface.index"] = resultArray[i].(int)
+		interfaceValue["interface.description"] = resultArray[i+1]
+		interfaceValue["interface.name"] = resultArray[i+2]
 		if resultArray[i+3] == 1 {
-			interfaceValue["Interface.Operational.Status"] = "Up"
+			interfaceValue["interface.operational.status"] = "up"
 		} else {
-			interfaceValue["Interface.Operational.Status"] = "Down"
+			interfaceValue["interface.operational.status"] = "down"
 		}
 		if resultArray[i+4] == 1 {
-			interfaceValue["Interface.Admin.Status"] = "Up"
+			interfaceValue["interface.admin.status"] = "up"
 		} else {
-			interfaceValue["Interface.Admin.Status"] = "Down"
+			interfaceValue["interface.admin.status"] = "down"
 		}
 		if resultArray[i+5] == "" {
-			interfaceValue["Interface.Alias.Name"] = "Empty"
+			interfaceValue["interface.alias.name"] = "empty"
 		} else {
-			interfaceValue["Interface.Alias.Name"] = resultArray[i+5]
+			interfaceValue["interface.alias.name"] = resultArray[i+5]
 		}
 
-		interfaceValue["Interface.Sent.Errors"] = resultArray[i+6]
-		interfaceValue["Interface.Receive.Errors"] = resultArray[i+7]
-		interfaceValue["Interface.Sent.Octets"] = resultArray[i+8]
-		interfaceValue["Interface.Receive.Octets"] = resultArray[i+8]
-		interfaceValue["Interface.Speed"] = resultArray[i+9]
+		interfaceValue["interface.sent.errors"] = resultArray[i+6]
+		interfaceValue["interface.receive.errors"] = resultArray[i+7]
+		interfaceValue["interface.sent.octets"] = resultArray[i+8]
+		interfaceValue["interface.receive.octets"] = resultArray[i+8]
+		interfaceValue["interface.speed"] = resultArray[i+9]
 
 		interfaces = append(interfaces, interfaceValue)
 	}
-	result["Interface"] = interfaces
-	result["ip.address"] = credentials["ip.address"]
+	result["interfaces"] = interfaces
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

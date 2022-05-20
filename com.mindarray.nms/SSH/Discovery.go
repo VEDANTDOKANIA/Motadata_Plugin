@@ -10,7 +10,7 @@ import (
 
 func Discovery(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
-	sshHost := credentials["ip.address"].(string)
+	sshHost := credentials["ip"].(string)
 	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
@@ -29,10 +29,10 @@ func Discovery(credentials map[string]interface{}) {
 
 	result := make(map[string]interface{})
 	if er != nil {
-		result["status"] = "Unsuccessful"
+		result["status"] = "fail"
 		result["error"] = er.Error()
 	} else {
-		result["status"] = "successful"
+		result["status"] = "success"
 	}
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

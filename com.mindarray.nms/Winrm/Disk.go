@@ -12,7 +12,7 @@ import (
 
 func DiskData(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
-	host := (credentials["ip.address"]).(string)
+	host := (credentials["ip"]).(string)
 	port := int(credentials["port"].(float64))
 	username := credentials["username"].(string)
 	password := credentials["password"].(string)
@@ -41,32 +41,32 @@ func DiskData(credentials map[string]interface{}) {
 		disk := make(map[string]interface{})
 		disk["Disk.Name"] = strings.Split(res[i], ":")[0]
 		if (i+1) > len(res) || res[i+1] == "" {
-			disk["Disk.Free.Bytes"] = 0
-			disk["Disk.Total.Bytes"] = 0
-			disk["Disk.Available.Bytes"] = 0
-			disk["Disk.Used.Percent"] = 0
-			disk["Disk.Free.Percent"] = 0
+			disk["disk.free.bytes"] = 0
+			disk["disk.total.bytes"] = 0
+			disk["disk.available.bytes"] = 0
+			disk["disk.used.percent"] = 0
+			disk["disk.free.percent"] = 0
 			disks = append(disks, disk)
 			break
 		}
 		bytes, _ := strconv.ParseInt(res[i+1], 10, 64)
 		usedBytes = usedBytes + bytes
-		disk["Disk.Available.Bytes"], _ = strconv.ParseInt(res[i+1], 10, 64)
+		disk["disk.available.bytes"], _ = strconv.ParseInt(res[i+1], 10, 64)
 		bytes, _ = strconv.ParseInt(res[i+2], 10, 64)
 		totalBytes = totalBytes + bytes
-		disk["Disk.Total.Bytes"] = bytes
-		disk["Disk.Used.Bytes"] = (disk["Disk.Total.Bytes"]).(int64) - (disk["Disk.Available.Bytes"]).(int64)
-		disk["Disk.Used.Percent"] = (float64((float64((disk["Disk.Total.Bytes"]).(int64)) - float64((disk["Disk.Used.Bytes"]).(int64))) / float64((disk["Disk.Total.Bytes"].(int64))))) * 100
-		disk["Disk.Free.Percent"] = 100 - disk["Disk.Used.Percent"].(float64)
+		disk["disk.total.bytes"] = bytes
+		disk["disk.used.bytes"] = (disk["disk.total.bytes"]).(int64) - (disk["disk.available.bytes"]).(int64)
+		disk["disk.used.percent"] = (float64((float64((disk["disk.total.bytes"]).(int64)) - float64((disk["disk.used.bytes"]).(int64))) / float64((disk["disk.total.bytes"].(int64))))) * 100
+		disk["disk.free.percent"] = 100 - disk["disk.used.percent"].(float64)
 		disks = append(disks, disk)
 	}
-	result["Disk.Total.Bytes"] = totalBytes
-	result["Disk.Used.Byes"] = usedBytes
-	result["Disk.Available.Bytes"] = totalBytes - usedBytes
-	result["Disk.Used.Percent"] = ((float64(totalBytes) - float64(usedBytes)) / float64(totalBytes)) * 100
-	result["Disk.Available.Percent"] = 100.00 - (result["Disk.Used.Percent"]).(float64)
-	result["Disk"] = disks
-	result["ip.address"] = credentials["ip.address"]
+	result["disk.total.bytes"] = totalBytes
+	result["disk.used.byes"] = usedBytes
+	result["disk.available.bytes"] = totalBytes - usedBytes
+	result["disk.used.percent"] = ((float64(totalBytes) - float64(usedBytes)) / float64(totalBytes)) * 100
+	result["disk.available.percent"] = 100.00 - (result["Disk.Used.Percent"]).(float64)
+	result["disks"] = disks
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

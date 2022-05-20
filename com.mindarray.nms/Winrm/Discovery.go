@@ -12,7 +12,7 @@ func Discovery(credentials map[string]interface{}) {
 	var errorOccurred []string
 	defer exception.ErrorHandle(credentials)
 	result := make(map[string]interface{})
-	host := (credentials["ip.address"]).(string)
+	host := (credentials["ip"]).(string)
 	port := int(credentials["port"].(float64))
 	username := credentials["username"].(string)
 	password := credentials["password"].(string)
@@ -26,9 +26,9 @@ func Discovery(credentials map[string]interface{}) {
 		errorOccurred = append(errorOccurred, err2.Error())
 	}
 	if len(errorOccurred) == 0 {
-		result["status"] = "successful"
+		result["status"] = "success"
 	} else {
-		result["status"] = "Unsuccessful"
+		result["status"] = "fail"
 		result["error"] = errorOccurred
 	}
 	data, _ := json.Marshal(result)

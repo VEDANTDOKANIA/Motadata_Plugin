@@ -25,7 +25,7 @@ func SystemData(credentials map[string]interface{}) {
 	}
 
 	params := &g.GoSNMP{
-		Target:    credentials["ip.address"].(string),
+		Target:    credentials["ip"].(string),
 		Port:      uint16(int(credentials["port"].(float64))),
 		Community: credentials["community"].(string),
 		Version:   version,
@@ -48,31 +48,31 @@ func SystemData(credentials map[string]interface{}) {
 
 		switch variable.Name {
 		case ".1.3.6.1.2.1.1.5.0":
-			result["System_Name"] = string(variable.Value.([]byte))
+			result["system_name"] = string(variable.Value.([]byte))
 			break
 		case ".1.3.6.1.2.1.1.1.0":
-			result["System_Description"] = string(variable.Value.([]byte))
+			result["system_description"] = string(variable.Value.([]byte))
 			break
 		case ".1.3.6.1.2.1.1.6.0":
 			if len(variable.Value.([]uint8)) == 0 {
-				result["System_Loaction"] = "No location Specified"
+				result["system_loaction"] = "No location Specified"
 			} else {
-				result["System_Loaction"] = string(variable.Value.([]byte))
+				result["system_loaction"] = string(variable.Value.([]byte))
 			}
 
 			break
 		case ".1.3.6.1.2.1.1.2.0":
-			result["System_OID"] = variable.Value
+			result["system_oid"] = variable.Value
 			break
 		case ".1.3.6.1.2.1.1.3.0":
-			result["System_Uptime"] = variable.Value
+			result["system_upTime"] = variable.Value
 			break
 		default:
 			result["error"] = "Unknown Interface"
 		}
 
 	}
-	result["ip.address"] = credentials["ip.address"]
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

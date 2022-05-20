@@ -12,7 +12,7 @@ import (
 
 func DiskData(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
-	sshHost := credentials["ip.address"].(string)
+	sshHost := credentials["ip"].(string)
 	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
@@ -54,28 +54,28 @@ func DiskData(credentials map[string]interface{}) {
 	for i := 0; i < len(res)-1; i++ {
 		disk := make(map[string]interface{})
 		value := strings.Split(res[i], " ")
-		disk["Disk.Name"] = value[0]
+		disk["disk.name"] = value[0]
 		total, _ := (strconv.ParseInt(value[1], 10, 64))
 		totalBytes = int(int64(totalBytes) + total*1024)
-		disk["Disk.Bytes.Total"] = total * 1024
+		disk["disk.bytes.total"] = total * 1024
 		used, _ := (strconv.ParseInt(value[2], 10, 64))
 		usedBytes = int(int64(usedBytes) + used*1024)
-		disk["Disk.Bytes.Used"] = used * 1024
+		disk["disk.bytes.used"] = used * 1024
 		available, _ := (strconv.ParseInt(value[3], 10, 64))
 		availableBytes = int(int64(availableBytes) + available*1024)
-		disk["Disk.Bytes.Available"] = available * 1024
+		disk["disk.bytes.available"] = available * 1024
 		usedPercent, _ := (strconv.ParseInt(strings.Split(value[4], "%")[0], 10, 64))
-		disk["Disk.Use.Percent"] = usedPercent
-		disk["Disk.Free.Percent"] = 100 - usedPercent
+		disk["disk.use.percent"] = usedPercent
+		disk["disk.free.percent"] = 100 - usedPercent
 		disks = append(disks, disk)
 	}
-	result["Disk"] = disks
-	result["Disk.Total.Bytes"] = totalBytes
-	result["Disk.Used.Bytes"] = usedBytes
-	result["Disk.Available.Bytes"] = availableBytes
+	result["disks"] = disks
+	result["disk.total.bytes"] = totalBytes
+	result["disk.used.bytes"] = usedBytes
+	result["disk.available.bytes"] = availableBytes
 	utilization = ((float64(totalBytes-availableBytes) / float64(totalBytes)) * 100)
-	result["Disk.Utilization.Percent"] = utilization
-	result["ip.address"] = credentials["ip.address"]
+	result["disk.utilization.percent"] = utilization
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))

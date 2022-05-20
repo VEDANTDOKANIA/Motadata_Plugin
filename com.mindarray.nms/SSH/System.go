@@ -12,7 +12,7 @@ import (
 func SystemData(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
 	const cmd = "uname -a | awk  '{ print $1 \" \" $2  \" \" $4 \" \"$6 \" \" $7 \" \" $8 \" \"$9 }' && vmstat | awk  '{if ($1 != \"procs\" && $1 !=\"r\") print $1 \" \" $2 \" \"  $12}'"
-	sshHost := credentials["ip.address"].(string)
+	sshHost := credentials["ip"].(string)
 	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
@@ -49,16 +49,16 @@ func SystemData(credentials map[string]interface{}) {
 	output := string(combo)
 	res := strings.Split(output, "\n")
 	systemValue := strings.Split(res[0], " ")
-	result["System.OS.Name"] = systemValue[0]
-	result["System.User.Name"] = systemValue[1]
-	result["System.OS.Version"] = systemValue[2]
-	result["System.Up.Time"] = systemValue[3] + " " + systemValue[4] + " " + systemValue[5] + " " + systemValue[6]
+	result["system.os.name"] = systemValue[0]
+	result["system.user.name"] = systemValue[1]
+	result["system.os.version"] = systemValue[2]
+	result["system.up.time"] = systemValue[3] + " " + systemValue[4] + " " + systemValue[5] + " " + systemValue[6]
 
 	processValue := strings.Split(res[1], " ")
-	result["System.Running.Process"] = processValue[0]
-	result["System.Blocking.Process"] = processValue[1]
-	result["System.Context.Switching"] = processValue[2]
-	result["ip.address"] = credentials["ip.address"]
+	result["system.running.process"] = processValue[0]
+	result["system.blocking.process"] = processValue[1]
+	result["system.context.switching"] = processValue[2]
+	result["ip"] = credentials["ip"]
 	result["metric.group"] = credentials["metric.group"]
 	data, _ := json.Marshal(result)
 	fmt.Print(string(data))
