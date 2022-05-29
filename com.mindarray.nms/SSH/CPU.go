@@ -16,7 +16,6 @@ func CpuData(credentials map[string]interface{}) {
 	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
-
 	config := &ssh.ClientConfig{
 		Timeout:         10 * time.Second,
 		User:            sshUser,
@@ -29,42 +28,45 @@ func CpuData(credentials map[string]interface{}) {
 	addr := fmt.Sprintf("%s:%d", sshHost, sshPort)
 	sshClient, er := ssh.Dial("tcp", addr, config)
 
+	var errors []string
 	result := make(map[string]interface{})
 	if er != nil {
-		result["error"] = "yes"
-		result["Cause"] = er
-	} else {
-		result["error"] = "no"
+		errors = append(errors, er.Error())
 	}
 	session, err := sshClient.NewSession()
 	if err != nil {
-		result["error"] = "yes"
-		result["Cause"] = er
+		errors = append(errors, err.Error())
+	}
+	combo, er := session.CombinedOutput(cmd)
+	if er != nil {
+		errors = append(errors, er.Error())
+		result["status"] = "fail"
+		result["error"] = errors
+		data, _ := json.Marshal(result)
+		fmt.Print(string(data))
 	} else {
-		result["error"] = "no"
+		output := string(combo)
+		res := strings.Split(output, "\n")
+		system := strings.Split(res[2], " ")
+		result["system.cpu.user.percent"] = system[1]
+		result["system.cpu.system.percent"] = system[2]
+		result["system.cpu.idle.percent"] = system[3]
+		var cores []map[string]interface{}
+		for i := 3; i < len(res)-1; i++ {
+			core := make(map[string]interface{})
+			value := strings.Split(res[i], " ")
+			core["core.name"] = value[0]
+			core["core.user.percent"] = value[1]
+			core["core.system.percent"] = value[2]
+			core["core.idle.percent"] = value[3]
+			cores = append(cores, core)
+		}
+		result["cores"] = cores
+		result["ip"] = credentials["ip"]
+		result["metric.group"] = credentials["metric.group"]
+		result["status"] = "success"
+		data, _ := json.Marshal(result)
+		fmt.Print(string(data))
 	}
 
-	combo, er := session.CombinedOutput(cmd)
-	output := string(combo)
-	res := strings.Split(output, "\n")
-	system := strings.Split(res[2], " ")
-	result["system.cpu.user.percent"] = system[1]
-	result["system.cpu.system.percent"] = system[2]
-	result["system.cpu.idle.percent"] = system[3]
-	var cores []map[string]interface{}
-	for i := 3; i < len(res)-1; i++ {
-		//cpu := make(map[string]interface{})
-		core := make(map[string]interface{})
-		value := strings.Split(res[i], " ")
-		core["core.name"] = value[0]
-		core["core.user.percent"] = value[1]
-		core["core.system.percent"] = value[2]
-		core["core.idle.percent"] = value[3]
-		cores = append(cores, core)
-	}
-	result["cores"] = cores
-	result["ip"] = credentials["ip"]
-	result["metric.group"] = credentials["metric.group"]
-	data, _ := json.Marshal(result)
-	fmt.Print(string(data))
 }

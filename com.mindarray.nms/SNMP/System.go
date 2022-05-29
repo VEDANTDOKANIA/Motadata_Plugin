@@ -32,49 +32,51 @@ func SystemData(credentials map[string]interface{}) {
 		Timeout:   time.Duration(1) * time.Second,
 	}
 	err := params.Connect()
+	var errors []string
 	if err != nil {
-		result["error"] = "yes"
-		result["Cause"] = err
+		result["error"] = err
+		result["status"] = "fail"
 		data, _ := json.Marshal(result)
 		fmt.Print(string(data))
-		//return
 	} else {
-		result["error"] = "no"
-	}
-
-	oid := []string{"1.3.6.1.2.1.1.5.0", "1.3.6.1.2.1.1.1.0", "1.3.6.1.2.1.1.6.0", "1.3.6.1.2.1.1.2.0", "1.3.6.1.2.1.1.3.0"}
-	value, _ := params.Get(oid)
-	for _, variable := range value.Variables {
-
-		switch variable.Name {
-		case ".1.3.6.1.2.1.1.5.0":
-			result["system_name"] = string(variable.Value.([]byte))
-			break
-		case ".1.3.6.1.2.1.1.1.0":
-			result["system_description"] = string(variable.Value.([]byte))
-			break
-		case ".1.3.6.1.2.1.1.6.0":
-			if len(variable.Value.([]uint8)) == 0 {
-				result["system_loaction"] = "No location Specified"
-			} else {
-				result["system_loaction"] = string(variable.Value.([]byte))
+		oid := []string{"1.3.6.1.2.1.1.5.0", "1.3.6.1.2.1.1.1.0", "1.3.6.1.2.1.1.6.0", "1.3.6.1.2.1.1.2.0", "1.3.6.1.2.1.1.3.0"}
+		value, _ := params.Get(oid)
+		for _, variable := range value.Variables {
+			switch variable.Name {
+			case ".1.3.6.1.2.1.1.5.0":
+				result["system_name"] = string(variable.Value.([]byte))
+				break
+			case ".1.3.6.1.2.1.1.1.0":
+				result["system.description"] = string(variable.Value.([]byte))
+				break
+			case ".1.3.6.1.2.1.1.6.0":
+				if len(variable.Value.([]uint8)) == 0 {
+					result["system.location"] = "empty"
+				} else {
+					result["system.location"] = string(variable.Value.([]byte))
+				}
+				break
+			case ".1.3.6.1.2.1.1.2.0":
+				result["system.oid"] = variable.Value
+				break
+			case ".1.3.6.1.2.1.1.3.0":
+				result["system.upTime"] = variable.Value
+				break
+			default:
+				errors = append(errors, "unknown interface")
 			}
 
-			break
-		case ".1.3.6.1.2.1.1.2.0":
-			result["system_oid"] = variable.Value
-			break
-		case ".1.3.6.1.2.1.1.3.0":
-			result["system_upTime"] = variable.Value
-			break
-		default:
-			result["error"] = "Unknown Interface"
 		}
+		result["ip"] = credentials["ip"]
+		result["metric.group"] = credentials["metric.group"]
 
+		if len(errors) == 0 {
+			result["status"] = "success"
+		} else {
+			result["status"] = "fail"
+			result["error"] = errors
+		}
+		data, _ := json.Marshal(result)
+		fmt.Print(string(data))
 	}
-	result["ip"] = credentials["ip"]
-	result["metric.group"] = credentials["metric.group"]
-	data, _ := json.Marshal(result)
-	fmt.Print(string(data))
-
 }

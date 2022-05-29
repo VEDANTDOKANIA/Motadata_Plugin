@@ -1,6 +1,9 @@
 package ExceptionHandler
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 func ErrorHandle(credentials map[string]interface{}) {
 
@@ -9,10 +12,10 @@ func ErrorHandle(credentials map[string]interface{}) {
 	data["metric.group"] = credentials["metric.group"]
 	error := recover()
 	if error != nil {
-		data["Panic"] = "Yes"
 		data["error"] = error
-		fmt.Println(data)
-
+		data["status"] = "fail"
+		result, _ := json.Marshal(data)
+		fmt.Println(string(result))
 	}
 
 }

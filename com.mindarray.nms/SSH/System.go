@@ -10,13 +10,12 @@ import (
 )
 
 func SystemData(credentials map[string]interface{}) {
-	defer exception.ErrorHandle(credentials)
 	const cmd = "uname -a | awk  '{ print $1 \" \" $2  \" \" $4 \" \"$6 \" \" $7 \" \" $8 \" \"$9 }' && vmstat | awk  '{if ($1 != \"procs\" && $1 !=\"r\") print $1 \" \" $2 \" \"  $12}'"
+	defer exception.ErrorHandle(credentials)
 	sshHost := credentials["ip"].(string)
 	sshPort := int(credentials["port"].(float64))
 	sshUser := credentials["username"].(string)
 	sshPassword := credentials["password"].(string)
-
 	config := &ssh.ClientConfig{
 		Timeout:         10 * time.Second,
 		User:            sshUser,
@@ -28,38 +27,39 @@ func SystemData(credentials map[string]interface{}) {
 	config.Auth = []ssh.AuthMethod{ssh.Password(sshPassword)}
 	addr := fmt.Sprintf("%s:%d", sshHost, sshPort)
 	sshClient, er := ssh.Dial("tcp", addr, config)
-
+	var errors []string
 	result := make(map[string]interface{})
 	if er != nil {
-		result["error"] = "yes"
-		result["Cause"] = er
-	} else {
-		result["error"] = "no"
+		errors = append(errors, er.Error())
 	}
 	session, err := sshClient.NewSession()
-
 	if err != nil {
-		result["error"] = "yes"
-		result["Cause"] = er
+		errors = append(errors, err.Error())
+	}
+	combo, er := session.CombinedOutput(cmd)
+	if er != nil {
+		errors = append(errors, er.Error())
+		result["status"] = "fail"
+		result["error"] = errors
+		data, _ := json.Marshal(result)
+		fmt.Print(string(data))
 	} else {
-		result["error"] = "no"
+		output := string(combo)
+		res := strings.Split(output, "\n")
+		systemValue := strings.Split(res[0], " ")
+		result["system.os.name"] = systemValue[0]
+		result["system.user.name"] = systemValue[1]
+		result["system.os.version"] = systemValue[2]
+		result["system.up.time"] = systemValue[3] + " " + systemValue[4] + " " + systemValue[5] + " " + systemValue[6]
+		processValue := strings.Split(res[1], " ")
+		result["system.running.process"] = processValue[0]
+		result["system.blocking.process"] = processValue[1]
+		result["system.context.switching"] = processValue[2]
+		result["ip"] = credentials["ip"]
+		result["metric.group"] = credentials["metric.group"]
+		result["status"] = "success"
+		data, _ := json.Marshal(result)
+		fmt.Print(string(data))
 	}
 
-	combo, er := session.CombinedOutput(cmd)
-	output := string(combo)
-	res := strings.Split(output, "\n")
-	systemValue := strings.Split(res[0], " ")
-	result["system.os.name"] = systemValue[0]
-	result["system.user.name"] = systemValue[1]
-	result["system.os.version"] = systemValue[2]
-	result["system.up.time"] = systemValue[3] + " " + systemValue[4] + " " + systemValue[5] + " " + systemValue[6]
-
-	processValue := strings.Split(res[1], " ")
-	result["system.running.process"] = processValue[0]
-	result["system.blocking.process"] = processValue[1]
-	result["system.context.switching"] = processValue[2]
-	result["ip"] = credentials["ip"]
-	result["metric.group"] = credentials["metric.group"]
-	data, _ := json.Marshal(result)
-	fmt.Print(string(data))
 }

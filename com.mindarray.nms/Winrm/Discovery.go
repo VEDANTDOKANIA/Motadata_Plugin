@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/masterzen/winrm"
+	"strings"
 )
 
 func Discovery(credentials map[string]interface{}) {
 	defer exception.ErrorHandle(credentials)
-	var errorOccurred []string
-	defer exception.ErrorHandle(credentials)
 	result := make(map[string]interface{})
+	var errors []string
 	host := (credentials["ip"]).(string)
 	port := int(credentials["port"].(float64))
 	username := credentials["username"].(string)
@@ -19,19 +19,31 @@ func Discovery(credentials map[string]interface{}) {
 	endpoint := winrm.NewEndpoint(host, port, false, false, nil, nil, nil, 0)
 	client, err := winrm.NewClient(endpoint, username, password)
 	if err != nil {
-		errorOccurred = append(errorOccurred, err.Error())
+		errors = append(errors, err.Error())
 	}
-	_, err2 := client.CreateShell()
-	if err2 != nil {
-		errorOccurred = append(errorOccurred, err2.Error())
-	}
-	if len(errorOccurred) == 0 {
-		result["status"] = "success"
-	} else {
+	_, er := client.CreateShell()
+
+	if er != nil {
+		errors = append(errors, er.Error())
 		result["status"] = "fail"
-		result["error"] = errorOccurred
+		result["error"] = errors
+		data, _ := json.Marshal(result)
+		fmt.Print(string(data))
+	} else {
+		a := "aa"
+		output := ""
+		ac := "hostname"
+		output, _, _, err = client.RunPSWithString(ac, a)
+		result["host"] = strings.Split(output, "\r\n")[0]
+		if len(errors) == 0 {
+			result["status"] = "success"
+		} else {
+			result["status"] = "fail"
+			result["error"] = errors
+		}
+		data, _ := json.Marshal(result)
+		fmt.Print(string(data))
+
 	}
-	data, _ := json.Marshal(result)
-	fmt.Print(string(data))
 
 }

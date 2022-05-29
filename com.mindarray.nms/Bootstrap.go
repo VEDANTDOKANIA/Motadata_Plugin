@@ -10,16 +10,14 @@ import (
 	"os"
 )
 
-//TODO CHange error msg in all metric group with status
-
 func main() {
 	argument, _ := base64.StdEncoding.DecodeString(os.Args[1])
 	credentials := make(map[string]interface{})
-	var error = json.Unmarshal([]byte(string(argument)), &credentials)
+	var err = json.Unmarshal([]byte(string(argument)), &credentials)
+	var errors []string
 	result := make(map[string]interface{})
-	if error != nil {
-		result["error"] = "yes"
-		result["Cause"] = error
+	if err != nil {
+		errors = append(errors, err.Error())
 
 	}
 
@@ -30,6 +28,8 @@ func main() {
 			Winrm.Discovery(credentials)
 		} else if credentials["type"] == "snmp" {
 			SNMP.Discovery(credentials)
+		} else {
+			errors = append(errors, "wrong tpe provided")
 		}
 
 	} else if credentials["category"] == "polling" {
@@ -50,8 +50,7 @@ func main() {
 			case "cpu":
 				SSH.CpuData(credentials)
 			default:
-				result["error"] = "yes"
-				result["Cause"] = "Wrong metric group selected for metric type linux"
+				errors = append(errors, "Wrong metric group selected for metric type linux")
 
 			}
 		} else if credentials["type"] == "windows" {
@@ -71,8 +70,7 @@ func main() {
 			case "cpu":
 				Winrm.CpuData(credentials)
 			default:
-				result["error"] = "yes"
-				result["Cause"] = "Wrong metric group selected for metric type Windows"
+				errors = append(errors, "Wrong metric group selected for metric type Windows")
 
 			}
 		} else if credentials["type"] == "snmp" {
@@ -84,15 +82,19 @@ func main() {
 				SNMP.InterfaceData(credentials)
 				break
 			default:
-				result["error"] = "yes"
-				result["Cause"] = "Wrong metric group selected for metric type Network Devices"
+				errors = append(errors, "Wrong metric group selected for metric type Network Devices")
 			}
+		} else {
+			errors = append(errors, "wrong type provided")
 		}
 	} else {
-		result["error"] = "yes"
-		result["Cause"] = "Wrong Category Given"
-
+		errors = append(errors, "wrong category given")
 	}
+	if errors != nil {
+		result["status"] = "fail"
+		result["error"] = errors
+	}
+
 	data, _ := json.Marshal(result)
 	if string(data) != "{}" {
 		fmt.Print(string(data))
