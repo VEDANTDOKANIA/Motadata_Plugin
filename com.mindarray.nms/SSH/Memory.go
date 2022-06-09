@@ -62,11 +62,18 @@ func MemoryData(credentials map[string]interface{}) {
 		usedPercent := float64(float64(totalBytes-usedBytes) / float64(totalBytes))
 		result["memory.used.percent"] = usedPercent
 		result["memory.available.percent"] = 100 - usedPercent
-		result["ip"] = credentials["ip"]
-		result["metric.group"] = credentials["metric.group"]
+
 		result["status"] = "success"
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 
 }

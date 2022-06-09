@@ -57,16 +57,16 @@ func DiskData(credentials map[string]interface{}) {
 			disk := make(map[string]interface{})
 			value := strings.Split(res[i], " ")
 			disk["disk.name"] = value[0]
-			total, _ := (strconv.ParseInt(value[1], 10, 64))
+			total, _ := strconv.ParseInt(value[1], 10, 64)
 			totalBytes = int(int64(totalBytes) + total*1024)
 			disk["disk.bytes.total"] = total * 1024
-			used, _ := (strconv.ParseInt(value[2], 10, 64))
+			used, _ := strconv.ParseInt(value[2], 10, 64)
 			usedBytes = int(int64(usedBytes) + used*1024)
 			disk["disk.bytes.used"] = used * 1024
-			available, _ := (strconv.ParseInt(value[3], 10, 64))
+			available, _ := strconv.ParseInt(value[3], 10, 64)
 			availableBytes = int(int64(availableBytes) + available*1024)
 			disk["disk.bytes.available"] = available * 1024
-			usedPercent, _ := (strconv.ParseInt(strings.Split(value[4], "%")[0], 10, 64))
+			usedPercent, _ := strconv.ParseInt(strings.Split(value[4], "%")[0], 10, 64)
 			disk["disk.use.percent"] = usedPercent
 			disk["disk.free.percent"] = 100 - usedPercent
 			disks = append(disks, disk)
@@ -75,13 +75,20 @@ func DiskData(credentials map[string]interface{}) {
 		result["disk.total.bytes"] = totalBytes
 		result["disk.used.bytes"] = usedBytes
 		result["disk.available.bytes"] = availableBytes
-		utilization = ((float64(totalBytes-availableBytes) / float64(totalBytes)) * 100)
+		utilization = (float64(totalBytes-availableBytes) / float64(totalBytes)) * 100
 		result["disk.utilization.percent"] = utilization
-		result["ip"] = credentials["ip"]
-		result["metric.group"] = credentials["metric.group"]
+
 		result["status"] = "success"
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 
 }

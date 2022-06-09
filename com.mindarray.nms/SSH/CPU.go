@@ -52,9 +52,9 @@ func CpuData(credentials map[string]interface{}) {
 		result["system.cpu.system.percent"] = system[2]
 		result["system.cpu.idle.percent"] = system[3]
 		var cores []map[string]interface{}
-		for i := 3; i < len(res)-1; i++ {
+		for index := 3; index < len(res)-1; index++ {
 			core := make(map[string]interface{})
-			value := strings.Split(res[i], " ")
+			value := strings.Split(res[index], " ")
 			core["core.name"] = value[0]
 			core["core.user.percent"] = value[1]
 			core["core.system.percent"] = value[2]
@@ -62,11 +62,18 @@ func CpuData(credentials map[string]interface{}) {
 			cores = append(cores, core)
 		}
 		result["cores"] = cores
-		result["ip"] = credentials["ip"]
-		result["metric.group"] = credentials["metric.group"]
+
 		result["status"] = "success"
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 
 }

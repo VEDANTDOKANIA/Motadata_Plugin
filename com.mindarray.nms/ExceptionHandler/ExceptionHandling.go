@@ -12,7 +12,7 @@ func ErrorHandle(credentials map[string]interface{}) {
 	data["metric.group"] = credentials["metric.group"]
 	error := recover()
 	if error != nil {
-		data["error"] = error
+		data["error"] = fmt.Sprintf("%v", error)
 		data["status"] = "fail"
 		result, _ := json.Marshal(data)
 		fmt.Println(string(result))

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
+	"strings"
 	"time"
 )
 
@@ -72,62 +73,61 @@ func Discovery(credentials map[string]interface{}) {
 		)
 		if walk != nil {
 			errors = append(errors, walk.Error())
-		}
+		} else {
+			var oids []string
+			for i := 0; i < len(walkOidArray); i++ {
+				oids = append(oids, snmpIndex+walkOidArray[i])
+				oids = append(oids, description+walkOidArray[i])
+				oids = append(oids, name+walkOidArray[i])
+				oids = append(oids, operationalStatus+walkOidArray[i])
+				oids = append(oids, alias+walkOidArray[i])
+			}
+			var startIndex = 0
+			var endIndex = 50
 
-		var oids []string
-		for i := 0; i < len(walkOidArray); i++ {
-			oids = append(oids, snmpIndex+walkOidArray[i])
-			oids = append(oids, description+walkOidArray[i])
-			oids = append(oids, name+walkOidArray[i])
-			oids = append(oids, operationalStatus+walkOidArray[i])
-			oids = append(oids, alias+walkOidArray[i])
-		}
-		var startIndex = 0
-		var endIndex = 50
+			var resultArray []interface{}
 
-		var resultArray []interface{}
-
-		for {
-			if len(resultArray) == len(oids) {
-				break
+			for {
+				if len(resultArray) == len(oids) {
+					break
+				}
+				output, error := params.Get(oids[startIndex:endIndex])
+				if error != nil {
+					errors = append(errors, walk.Error())
+					return
+				}
+				for _, variable := range output.Variables {
+					resultArray = append(resultArray, SnmpData(variable))
+				}
+				startIndex = endIndex
+				endIndex = endIndex + 40
+				if endIndex > len(oids) {
+					endIndex = len(oids)
+				}
 			}
-			output, error := params.Get(oids[startIndex:endIndex])
-			if error != nil {
-				errors = append(errors, walk.Error())
-				return
+			var interfaces []map[string]interface{}
+			for index := 0; index < len(resultArray); index = index + 5 {
+				interfaceValue := make(map[string]interface{})
+				interfaceValue["interface.index"] = resultArray[index].(int)
+				interfaceValue["interface.description"] = resultArray[index+1]
+				interfaceValue["interface.name"] = resultArray[index+2]
+				if resultArray[index+3] == 1 {
+					interfaceValue["interface.operational.status"] = "up"
+				} else {
+					interfaceValue["interface.operational.status"] = "down"
+				}
+				if resultArray[index+4] == "" {
+					interfaceValue["interface.alias.name"] = ""
+				} else {
+					interfaceValue["interface.alias.name"] = strings.Trim(fmt.Sprintf("%v", resultArray[index+4]), "\"")
+				}
+				interfaces = append(interfaces, interfaceValue)
 			}
-			for _, variable := range output.Variables {
-				resultArray = append(resultArray, SnmpData(variable))
-			}
-			startIndex = endIndex
-			endIndex = endIndex + 50
-			if endIndex > len(oids) {
-				endIndex = len(oids)
-			}
+			result["interfaces"] = interfaces
+			value, _ := params.Get([]string{"1.3.6.1.2.1.1.5.0"})
+			variable := value.Variables[0]
+			result["host"] = string(variable.Value.([]byte))
 		}
-		var interfaces []map[string]interface{}
-		for index := 0; index < len(resultArray); index = index + 5 {
-			interfaceValue := make(map[string]interface{})
-			interfaceValue["interface.index"] = resultArray[index].(int)
-			interfaceValue["interface.description"] = resultArray[index+1]
-			interfaceValue["interface.name"] = resultArray[index+2]
-			if resultArray[index+3] == 1 {
-				interfaceValue["interface.operational.status"] = "up"
-			} else {
-				interfaceValue["interface.operational.status"] = "down"
-			}
-			if resultArray[index+4] == "" {
-				interfaceValue["interface.alias.name"] = "empty"
-			} else {
-				interfaceValue["interface.alias.name"] = resultArray[index+5]
-			}
-			interfaces = append(interfaces, interfaceValue)
-		}
-		result["interfaces"] = interfaces
-		value, _ := params.Get([]string{"1.3.6.1.2.1.1.5.0"})
-		variable := value.Variables[0]
-		result["host"] = string(variable.Value.([]byte))
-		result["ip"] = credentials["ip"]
 		if len(errors) == 0 {
 			result["status"] = "success"
 		} else {

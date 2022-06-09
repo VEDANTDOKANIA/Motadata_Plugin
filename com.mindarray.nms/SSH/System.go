@@ -52,14 +52,21 @@ func SystemData(credentials map[string]interface{}) {
 		result["system.os.version"] = systemValue[2]
 		result["system.up.time"] = systemValue[3] + " " + systemValue[4] + " " + systemValue[5] + " " + systemValue[6]
 		processValue := strings.Split(res[1], " ")
-		result["system.running.process"] = processValue[0]
-		result["system.blocking.process"] = processValue[1]
+		result["system.running.processes"] = processValue[0]
+		result["system.blocking.processes"] = processValue[1]
 		result["system.context.switching"] = processValue[2]
-		result["ip"] = credentials["ip"]
-		result["metric.group"] = credentials["metric.group"]
+
 		result["status"] = "success"
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 
 }

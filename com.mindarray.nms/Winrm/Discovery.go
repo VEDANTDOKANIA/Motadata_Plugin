@@ -24,7 +24,12 @@ func Discovery(credentials map[string]interface{}) {
 	_, er := client.CreateShell()
 
 	if er != nil {
-		errors = append(errors, er.Error())
+		if strings.Contains(er.Error(), "http response error: 401 - invalid content type") {
+			errors = append(errors, "wrong username or password")
+		} else if strings.Contains(er.Error(), " connect: connection refused") {
+			errors = append(errors, "wrong ip or port")
+		}
+
 		result["status"] = "fail"
 		result["error"] = errors
 		data, _ := json.Marshal(result)
@@ -41,8 +46,16 @@ func Discovery(credentials map[string]interface{}) {
 			result["status"] = "fail"
 			result["error"] = errors
 		}
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 
 	}
 

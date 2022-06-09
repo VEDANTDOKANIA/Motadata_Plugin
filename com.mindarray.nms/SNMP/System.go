@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
+	"strings"
 	"time"
 )
 
@@ -44,10 +45,10 @@ func SystemData(credentials map[string]interface{}) {
 		for _, variable := range value.Variables {
 			switch variable.Name {
 			case ".1.3.6.1.2.1.1.5.0":
-				result["system_name"] = string(variable.Value.([]byte))
+				result["system.name"] = string(variable.Value.([]byte))
 				break
 			case ".1.3.6.1.2.1.1.1.0":
-				result["system.description"] = string(variable.Value.([]byte))
+				result["system.description"] = strings.Replace(string(variable.Value.([]byte)), "\r\n", " ", 3)
 				break
 			case ".1.3.6.1.2.1.1.6.0":
 				if len(variable.Value.([]uint8)) == 0 {
@@ -60,23 +61,29 @@ func SystemData(credentials map[string]interface{}) {
 				result["system.oid"] = variable.Value
 				break
 			case ".1.3.6.1.2.1.1.3.0":
-				result["system.upTime"] = variable.Value
+				result["system.up.time"] = variable.Value
 				break
 			default:
 				errors = append(errors, "unknown interface")
 			}
 
 		}
-		result["ip"] = credentials["ip"]
-		result["metric.group"] = credentials["metric.group"]
-
 		if len(errors) == 0 {
 			result["status"] = "success"
 		} else {
 			result["status"] = "fail"
 			result["error"] = errors
 		}
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
+
 	}
 }

@@ -14,7 +14,6 @@ func SystemData(credentials map[string]interface{}) {
 	port := int(credentials["port"].(float64))
 	username := credentials["username"].(string)
 	password := credentials["password"].(string)
-
 	endpoint := winrm.NewEndpoint(host, port, false, false, nil, nil, nil, 0)
 	result := make(map[string]interface{})
 	var errors []string
@@ -23,7 +22,12 @@ func SystemData(credentials map[string]interface{}) {
 		errors = append(errors, err.Error())
 	}
 	clients, er := client.CreateShell()
-	defer clients.Close()
+	defer func(clients *winrm.Shell) {
+		err := clients.Close()
+		if err != nil {
+			errors = append(errors, err.Error())
+		}
+	}(clients)
 	if er != nil {
 		errors = append(errors, er.Error())
 		result["status"] = "fail"
@@ -36,13 +40,20 @@ func SystemData(credentials map[string]interface{}) {
 		ac := "(Get-WmiObject win32_operatingsystem).name;(Get-WMIObject win32_operatingsystem).version;whoami;(Get-WMIObject win32_operatingsystem).LastBootUpTime;" // Command jo humko run karna hain
 		output, _, _, err = client.RunPSWithString(ac, a)
 		res1 := strings.Split(output, "\n")
-		result["system.os.name"] = strings.Split(res1[0], "\r")[0]
+		result["system.os.name"] = strings.Replace(strings.Split(res1[0], "\r")[0], "\\", " ", -1)
 		result["system.os.version"] = strings.Split(res1[1], "\r")[0]
-		result["system.user.name"] = strings.Split(res1[2], "\r")[0]
+		result["system.user.name"] = strings.Replace(strings.Split(res1[2], "\r")[0], "\\", " ", -1)
 		result["system.up.time"] = strings.Split(res1[3], "\r")[0]
-		result["metric.group"] = credentials["metric.group"]
 		result["status"] = "success"
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 }

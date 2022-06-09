@@ -25,7 +25,12 @@ func DiskData(credentials map[string]interface{}) {
 		errors = append(errors, err.Error())
 	}
 	clients, er := client.CreateShell()
-	defer clients.Close()
+	defer func(clients *winrm.Shell) {
+		err := clients.Close()
+		if err != nil {
+			errors = append(errors, err.Error())
+		}
+	}(clients)
 	if er != nil {
 		errors = append(errors, er.Error())
 		result["status"] = "fail"
@@ -42,12 +47,12 @@ func DiskData(credentials map[string]interface{}) {
 		var usedBytes int64
 		var totalBytes int64
 		if math.Mod(float64(len(res)), 3) != 0 {
-
+			res = res[0 : len(res)-1]
 		}
-		for i := 0; i < len(res); i = i + 3 {
+		for index := 0; index < len(res); index = index + 3 {
 			disk := make(map[string]interface{})
-			disk["Disk.Name"] = strings.Split(res[i], ":")[0]
-			if (i+1) > len(res) || res[i+1] == "" {
+			disk["disk.name"] = strings.Split(res[index], ":")[0]
+			if (index+2) > len(res) || res[index+1] == "" {
 				disk["disk.free.bytes"] = 0
 				disk["disk.total.bytes"] = 0
 				disk["disk.available.bytes"] = 0
@@ -56,10 +61,10 @@ func DiskData(credentials map[string]interface{}) {
 				disks = append(disks, disk)
 				break
 			}
-			bytes, _ := strconv.ParseInt(res[i+1], 10, 64)
+			bytes, _ := strconv.ParseInt(res[index+1], 10, 64)
 			usedBytes = usedBytes + bytes
-			disk["disk.available.bytes"], _ = strconv.ParseInt(res[i+1], 10, 64)
-			bytes, _ = strconv.ParseInt(res[i+2], 10, 64)
+			disk["disk.available.bytes"], _ = strconv.ParseInt(res[index+1], 10, 64)
+			bytes, _ = strconv.ParseInt(res[index+2], 10, 64)
 			totalBytes = totalBytes + bytes
 			disk["disk.total.bytes"] = bytes
 			disk["disk.used.bytes"] = (disk["disk.total.bytes"]).(int64) - (disk["disk.available.bytes"]).(int64)
@@ -73,11 +78,18 @@ func DiskData(credentials map[string]interface{}) {
 		result["disk.used.percent"] = ((float64(totalBytes) - float64(usedBytes)) / float64(totalBytes)) * 100
 		result["disk.available.percent"] = 100.00 - (result["disk.used.percent"]).(float64)
 		result["disks"] = disks
-		result["ip"] = credentials["ip"]
-		result["metric.group"] = credentials["metric.group"]
+
 		result["status"] = "success"
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 
 }

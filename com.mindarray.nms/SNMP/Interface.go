@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	g "github.com/gosnmp/gosnmp"
+	"strings"
 	"time"
 )
 
@@ -33,7 +34,6 @@ func InterfaceData(credentials map[string]interface{}) {
 	}
 	err := params.Connect()
 	if err != nil {
-
 		result["error"] = err
 		result["status"] = "fail"
 		data, _ := json.Marshal(result)
@@ -82,38 +82,36 @@ func InterfaceData(credentials map[string]interface{}) {
 		}
 
 		var oids []string
-		for i := 0; i < len(walkOidArray); i++ {
-			oids = append(oids, snmpIndex+walkOidArray[i])
-			oids = append(oids, description+walkOidArray[i])
-			oids = append(oids, name+walkOidArray[i])
-			oids = append(oids, operationalStatus+walkOidArray[i])
-			oids = append(oids, adminStatus+walkOidArray[i])
-			oids = append(oids, alias+walkOidArray[i])
-			oids = append(oids, sentError+walkOidArray[i])
-			oids = append(oids, receiveError+walkOidArray[i])
-			oids = append(oids, sentOctets+walkOidArray[i])
-			oids = append(oids, receiveOctets+walkOidArray[i])
-			oids = append(oids, ifSpeed+walkOidArray[i])
+		for index := 0; index < len(walkOidArray); index++ {
+			oids = append(oids, snmpIndex+walkOidArray[index])
+			oids = append(oids, description+walkOidArray[index])
+			oids = append(oids, name+walkOidArray[index])
+			oids = append(oids, operationalStatus+walkOidArray[index])
+			oids = append(oids, adminStatus+walkOidArray[index])
+			oids = append(oids, alias+walkOidArray[index])
+			oids = append(oids, sentError+walkOidArray[index])
+			oids = append(oids, receiveError+walkOidArray[index])
+			oids = append(oids, sentOctets+walkOidArray[index])
+			oids = append(oids, receiveOctets+walkOidArray[index])
+			oids = append(oids, ifSpeed+walkOidArray[index])
 		}
 		var startIndex = 0
-		var endIndex = 60
-
+		var endIndex = 40
 		var resultArray []interface{}
-
 		for {
 			if len(resultArray) == len(oids) {
 				break
 			}
-			output, error := params.Get(oids[startIndex:endIndex])
-			if error != nil {
-				errors = append(errors, error.Error())
+			output, err2 := params.Get(oids[startIndex:endIndex])
+			if err2 != nil {
+				errors = append(errors, err2.Error())
 				return
 			}
 			for _, variable := range output.Variables {
 				resultArray = append(resultArray, SnmpData(variable))
 			}
 			startIndex = endIndex
-			endIndex = endIndex + 60
+			endIndex = endIndex + 40
 			if endIndex > len(oids) {
 				endIndex = len(oids)
 			}
@@ -135,29 +133,31 @@ func InterfaceData(credentials map[string]interface{}) {
 			} else {
 				interfaceValue["interface.admin.status"] = "down"
 			}
-			if resultArray[index+5] == "" {
-				interfaceValue["interface.alias.name"] = "empty"
-			} else {
-				interfaceValue["interface.alias.name"] = resultArray[index+5]
-			}
+			interfaceValue["interface.alias.name"] = strings.Trim(fmt.Sprintf("%v", resultArray[index+5]), "\"")
 			interfaceValue["interface.sent.errors"] = resultArray[index+6]
 			interfaceValue["interface.receive.errors"] = resultArray[index+7]
 			interfaceValue["interface.sent.octets"] = resultArray[index+8]
-			interfaceValue["interface.receive.octets"] = resultArray[index+8]
-			interfaceValue["interface.speed"] = resultArray[index+9]
+			interfaceValue["interface.receive.octets"] = resultArray[index+9]
+			interfaceValue["interface.speed"] = resultArray[index+10]
 			interfaces = append(interfaces, interfaceValue)
 		}
 		result["interfaces"] = interfaces
-		result["ip"] = credentials["ip"]
-		result["metric.group"] = credentials["metric.group"]
 		if len(errors) == 0 {
 			result["status"] = "success"
 		} else {
 			result["status"] = "fail"
 			result["error"] = errors
 		}
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, error := json.Marshal(result)
+		if error != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = error.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 }
 func SnmpData(pdu g.SnmpPDU) interface{} {

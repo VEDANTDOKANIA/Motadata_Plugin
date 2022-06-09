@@ -24,7 +24,12 @@ func MemoryData(credentials map[string]interface{}) {
 		errors = append(errors, err.Error())
 	}
 	clients, er := client.CreateShell()
-	defer clients.Close()
+	defer func(clients *winrm.Shell) {
+		err := clients.Close()
+		if err != nil {
+			errors = append(errors, err.Error())
+		}
+	}(clients)
 	if er != nil {
 		errors = append(errors, er.Error())
 		result["status"] = "fail"
@@ -35,28 +40,36 @@ func MemoryData(credentials map[string]interface{}) {
 		a := "aa"
 		output := ""
 		ac := "Get-WmiObject win32_OperatingSystem |%{\"{0} \n{1} \n{2} \n" +
-			"{3}\" -f $_.totalvisiblememorysize, $_.freephysicalmemory, $_.totalvirtualmemorysize, $_.freevirtualmemory}" // Command jo humko run karna hain
+			"{3}\" -f $_.totalvisiblememorysize, $_.freephysicalmemory, $_.totalvirtualmemorysize, $_.freevirtualmemory}"
 		output, _, _, err = client.RunPSWithString(ac, a)
 		res1 := strings.Split(output, "\n")
 
-		total_space_memory, _ := strconv.ParseInt(strings.TrimSpace(res1[0]), 10, 64)
-		total_space_virtual, _ := strconv.ParseInt(strings.TrimSpace(res1[2]), 10, 64)
-		free_space_memory, _ := strconv.ParseInt(strings.TrimSpace(res1[1]), 10, 64)
-		free_space_virtual, _ := strconv.ParseInt(strings.TrimSpace(res1[3]), 10, 64)
-		total_space := float64(total_space_memory + total_space_virtual)
-		free_space := float64(free_space_virtual + free_space_memory)
-		percent := float64(free_space/total_space) * 100
-		result["memory.total.bytes"] = total_space_memory * 1000
-		result["memory.free.bytes"] = free_space_memory * 1000
-		result["memory.used.bytes"] = (total_space_memory - free_space_memory) * 1000
-		result["memory.virtual.total.bytes"] = total_space_virtual * 1000
-		result["memory.virtual.free.bytes"] = free_space_virtual * 1000
-		result["memory.virtual.used.bytes"] = (total_space_virtual - free_space_virtual) * 1000
+		totalSpaceMemory, _ := strconv.ParseInt(strings.TrimSpace(res1[0]), 10, 64)
+		totalSpaceVirtual, _ := strconv.ParseInt(strings.TrimSpace(res1[2]), 10, 64)
+		freeSpaceMemory, _ := strconv.ParseInt(strings.TrimSpace(res1[1]), 10, 64)
+		freeSpaceVirtual, _ := strconv.ParseInt(strings.TrimSpace(res1[3]), 10, 64)
+		totalSpace := float64(totalSpaceMemory + totalSpaceVirtual)
+		freeSpace := float64(freeSpaceVirtual + freeSpaceMemory)
+		percent := float64(freeSpace/totalSpace) * 100
+		result["memory.total.bytes"] = totalSpaceMemory * 1000
+		result["memory.free.bytes"] = freeSpaceMemory * 1000
+		result["memory.used.bytes"] = (totalSpaceMemory - freeSpaceMemory) * 1000
+		result["memory.virtual.total.bytes"] = totalSpaceVirtual * 1000
+		result["memory.virtual.free.bytes"] = freeSpaceVirtual * 1000
+		result["memory.virtual.used.bytes"] = (totalSpaceVirtual - freeSpaceVirtual) * 1000
 		result["memory.used.percent"] = percent
 		result["memory.available.percent"] = 100.0 - percent
 		result["metric.group"] = credentials["metric.group"]
 		result["status"] = "success"
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 }

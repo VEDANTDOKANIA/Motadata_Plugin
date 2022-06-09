@@ -47,9 +47,9 @@ func ProcessData(credentials map[string]interface{}) {
 		output := string(combo)
 		res := strings.Split(output, "\n")
 		var processes []map[string]interface{}
-		for i := 0; i < len(res)-1; i++ {
+		for index := 0; index < len(res)-1; index++ {
 			processValue := make(map[string]interface{})
-			value := strings.Split(res[i], " ")
+			value := strings.Split(res[index], " ")
 			processValue["process.user"] = value[0]
 			processValue["process.id"] = value[1]
 			processValue["process.cpu.percent"] = value[2]
@@ -58,10 +58,17 @@ func ProcessData(credentials map[string]interface{}) {
 			processes = append(processes, processValue)
 		}
 		result["processes"] = processes
-		result["ip"] = credentials["ip"]
-		result["metric.group"] = credentials["metric.group"]
+
 		result["status"] = "success"
-		data, _ := json.Marshal(result)
-		fmt.Print(string(data))
+		data, err2 := json.Marshal(result)
+		if err2 != nil {
+			out := make(map[string]interface{})
+			out["status"] = "fail"
+			out["error"] = err2.Error()
+			output, _ := json.Marshal(out)
+			fmt.Print(string(output))
+		} else {
+			fmt.Print(string(data))
+		}
 	}
 }

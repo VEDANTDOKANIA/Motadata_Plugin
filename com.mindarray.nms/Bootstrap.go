@@ -13,14 +13,12 @@ import (
 func main() {
 	argument, _ := base64.StdEncoding.DecodeString(os.Args[1])
 	credentials := make(map[string]interface{})
-	var err = json.Unmarshal([]byte(string(argument)), &credentials)
+	var err = json.Unmarshal(argument, &credentials)
 	var errors []string
 	result := make(map[string]interface{})
 	if err != nil {
 		errors = append(errors, err.Error())
-
 	}
-
 	if credentials["category"] == "discovery" {
 		if credentials["type"] == "linux" {
 			SSH.Discovery(credentials)
@@ -29,7 +27,7 @@ func main() {
 		} else if credentials["type"] == "snmp" {
 			SNMP.Discovery(credentials)
 		} else {
-			errors = append(errors, "wrong tpe provided")
+			errors = append(errors, "wrong type provided")
 		}
 
 	} else if credentials["category"] == "polling" {
@@ -50,7 +48,7 @@ func main() {
 			case "cpu":
 				SSH.CpuData(credentials)
 			default:
-				errors = append(errors, "Wrong metric group selected for metric type linux")
+				errors = append(errors, "wrong metric group selected for metric type linux")
 
 			}
 		} else if credentials["type"] == "windows" {
@@ -70,7 +68,7 @@ func main() {
 			case "cpu":
 				Winrm.CpuData(credentials)
 			default:
-				errors = append(errors, "Wrong metric group selected for metric type Windows")
+				errors = append(errors, "wrong metric group selected for metric type windows")
 
 			}
 		} else if credentials["type"] == "snmp" {
@@ -82,7 +80,7 @@ func main() {
 				SNMP.InterfaceData(credentials)
 				break
 			default:
-				errors = append(errors, "Wrong metric group selected for metric type Network Devices")
+				errors = append(errors, "wrong metric group selected for metric type network devices")
 			}
 		} else {
 			errors = append(errors, "wrong type provided")
@@ -95,9 +93,16 @@ func main() {
 		result["error"] = errors
 	}
 
-	data, _ := json.Marshal(result)
-	if string(data) != "{}" {
-		fmt.Print(string(data))
+	data, err2 := json.Marshal(result)
+	if err2 != nil {
+		out := make(map[string]interface{})
+		out["status"] = "fail"
+		out["error"] = err2.Error()
+		output, _ := json.Marshal(out)
+		fmt.Print(string(output))
+	} else {
+		if string(data) != "{}" {
+			fmt.Print(string(data))
+		}
 	}
-
 }
